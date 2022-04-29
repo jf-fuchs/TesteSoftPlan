@@ -1,0 +1,6 @@
+*.dcu
+*.identcache
+*.local
+Win32\*.*
+__history
+Downloads
