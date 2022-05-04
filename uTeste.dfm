@@ -10,9 +10,12 @@ object FrmLogDownloads: TFrmLogDownloads
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
+  KeyPreview = True
   OldCreateOrder = False
   Position = poMainFormCenter
+  OnClose = FormClose
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnResize = FormResize
   DesignSize = (
     781
@@ -20,13 +23,15 @@ object FrmLogDownloads: TFrmLogDownloads
   PixelsPerInch = 96
   TextHeight = 13
   object gdLog: TDBGrid
-    Left = 8
-    Top = 96
-    Width = 765
-    Height = 342
+    Left = 121
+    Top = 4
+    Width = 655
+    Height = 438
     Anchors = [akLeft, akTop, akRight, akBottom]
+    Ctl3D = True
     DataSource = dsLog
     Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    ParentCtl3D = False
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -67,163 +72,90 @@ object FrmLogDownloads: TFrmLogDownloads
         Visible = False
       end>
   end
-  object btnIniciar: TBitBtn
-    Left = 8
-    Top = 65
-    Width = 161
-    Height = 25
-    Caption = 'Inicar Download'
+  object Panel1: TPanel
+    Left = 3
+    Top = 4
+    Width = 114
+    Height = 438
+    Anchors = [akLeft, akTop, akBottom]
+    BevelInner = bvLowered
+    Ctl3D = False
+    ParentCtl3D = False
     TabOrder = 1
-    OnClick = btnIniciarClick
-  end
-  object pgProgresso: TProgressBar
-    Left = 296
-    Top = 73
-    Width = 477
-    Height = 17
-    Anchors = [akLeft, akTop, akRight]
-    MarqueeInterval = 1
-    Step = 1
-    TabOrder = 2
-  end
-  object btnAdicionar: TBitBtn
-    Left = 8
-    Top = 8
-    Width = 161
-    Height = 25
-    Caption = 'Adicionar URL'
-    Glyph.Data = {
-      06030000424D060300000000000036000000280000000F0000000F0000000100
-      180000000000D002000000000000000000000000000000000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
-      0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
-      0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF00000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
-      0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
-      0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
-      C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
-      FFC9AEFFC9AEFF000000}
-    TabOrder = 3
-    OnClick = btnAdicionarClick
-  end
-  object btnRemoverURL: TBitBtn
-    Left = 175
-    Top = 8
-    Width = 161
-    Height = 25
-    Caption = 'Remover URL'
-    TabOrder = 4
-    OnClick = btnRemoverURLClick
-  end
-  object Conexao: TFDConnection
-    Params.Strings = (
-      'DriverID=SQLite'
-      'Database=C:\JFF\Teste\DB\Downloads.db'
-      'DateTimeFormat=DateTime')
-    FormatOptions.AssignedValues = [fvFmtDisplayDateTime, fvFmtDisplayDate]
-    FormatOptions.FmtDisplayDateTime = 'dd/mm/yyyy HH:MM:SS'
-    FormatOptions.FmtDisplayDate = 'dd/mm/yyyy'
-    Connected = True
-    LoginPrompt = False
-    Left = 24
-    Top = 256
+    object btnAdicionar: TBitBtn
+      Left = 5
+      Top = 5
+      Width = 105
+      Height = 25
+      Caption = 'Adicionar URL'
+      Glyph.Data = {
+        06030000424D060300000000000036000000280000000F0000000F0000000100
+        180000000000D002000000000000000000000000000000000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
+        0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
+        0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF00000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
+        0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF00000000000000
+        0000000000000000C9AEFFC9AEFFC9AEFFC9AEFFC9AEFF000000C9AEFFC9AEFF
+        C9AEFFC9AEFFC9AEFF000000000000000000000000000000C9AEFFC9AEFFC9AE
+        FFC9AEFFC9AEFF000000}
+      TabOrder = 0
+      OnClick = btnAdicionarClick
+    end
+    object btnRemoverURL: TBitBtn
+      Left = 5
+      Top = 32
+      Width = 105
+      Height = 25
+      Caption = 'Remover URL'
+      TabOrder = 1
+      OnClick = btnRemoverURLClick
+    end
+    object btnIniciar: TBitBtn
+      Left = 5
+      Top = 59
+      Width = 105
+      Height = 25
+      Caption = 'Iniciar Download'
+      TabOrder = 2
+      OnClick = btnIniciarClick
+    end
+    object btnIniciarTodos: TBitBtn
+      Left = 5
+      Top = 86
+      Width = 105
+      Height = 25
+      Caption = 'Iniciar Todos'
+      TabOrder = 3
+      OnClick = btnIniciarTodosClick
+    end
+    object btnInterromper: TBitBtn
+      Left = 5
+      Top = 113
+      Width = 105
+      Height = 25
+      Caption = 'Interromper'
+      TabOrder = 4
+    end
   end
   object dsLog: TDataSource
-    DataSet = CDS
-    Left = 200
-    Top = 176
-  end
-  object qLog: TFDQuery
-    Connection = Conexao
-    Transaction = Transacao
-    SQL.Strings = (
-      'SELECT 0 AS PERC, CODIGO, URL, DATAINICIO, DATAFIM'
-      'FROM LOGDOWNLOAD')
-    Left = 104
-    Top = 176
-    object qLogPERC: TLargeintField
-      AutoGenerateValue = arDefault
-      FieldName = 'PERC'
-      Origin = 'PERC'
-      ProviderFlags = []
-    end
-    object qLogCODIGO: TFDAutoIncField
-      FieldName = 'CODIGO'
-      Origin = 'CODIGO'
-      ProviderFlags = [pfInWhere, pfInKey]
-    end
-    object qLogURL: TWideStringField
-      FieldName = 'URL'
-      Origin = 'URL'
-      Required = True
-      Size = 200
-    end
-    object qLogDATAINICIO: TDateTimeField
-      FieldName = 'DATAINICIO'
-      Origin = 'DATAINICIO'
-      Required = True
-      DisplayFormat = 'dd/mm/yyyy HH:MM:SS'
-    end
-    object qLogDATAFIM: TDateTimeField
-      FieldName = 'DATAFIM'
-      Origin = 'DATAFIM'
-      Required = True
-      DisplayFormat = 'dd/mm/yyyy HH:MM:SS'
-    end
-  end
-  object Transacao: TFDTransaction
-    Connection = Conexao
-    Left = 72
-    Top = 256
-  end
-  object DSP: TDataSetProvider
-    DataSet = qLog
-    Left = 136
-    Top = 176
-  end
-  object CDS: TClientDataSet
-    Aggregates = <>
-    Params = <>
-    ProviderName = 'DSP'
-    Left = 168
-    Top = 176
-    object CDSPERC: TLargeintField
-      Alignment = taCenter
-      FieldName = 'PERC'
-    end
-    object CDSURL: TWideStringField
-      FieldName = 'URL'
-      Required = True
-      Size = 200
-    end
-    object CDSDATAINICIO: TDateTimeField
-      FieldName = 'DATAINICIO'
-      Required = True
-      OnGetText = CDSDATAFIMGetText
-    end
-    object CDSDATAFIM: TDateTimeField
-      FieldName = 'DATAFIM'
-      Required = True
-      OnGetText = CDSDATAFIMGetText
-    end
-    object CDSCODIGO: TAutoIncField
-      FieldName = 'CODIGO'
-      ReadOnly = True
-    end
+    DataSet = DM.CDS
+    Left = 152
+    Top = 48
   end
 end

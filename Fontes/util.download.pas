@@ -18,9 +18,11 @@ uses
 type
   TIdHTTPProgress = class(TIdHTTP)
   private
+    fID: Integer;
     fProgress: Integer;
     fBytesToTransfer: Int64;
     fOnChange: TNotifyEvent;
+    //
     IOHndl: TIdSSLIOHandlerSocketOpenSSL;
     procedure HTTPWorkBegin(ASender: TObject; aWorkMode: TWorkMode; aWorkCountMax: Int64);
     procedure HTTPWork(ASender: TObject; aWorkMode: TWorkMode; aWorkCount: Int64);
@@ -29,8 +31,10 @@ type
     procedure SetOnChange(const Value: TNotifyEvent);
   public
     constructor Create(AOwner: TComponent);
-    procedure DownloadFile(const aFileUrl: string; const aDestinationFile: String);
+    procedure   DownloadFile(const aFileUrl: string; const aDestinationFile: String);
+    destructor  Destroy; override;
   published
+    property ID: Integer read fID write fID;
     property Progress: Integer read fProgress write SetProgress;
     property BytesToTransfer: Int64 read fBytesToTransfer;
     property OnChange: TNotifyEvent read fOnChange write SetOnChange;
@@ -48,49 +52,56 @@ begin
   Request.Accept := 'text/html, image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*';
   Request.AcceptEncoding := 'gzip, deflate';
   Request.UserAgent := 'Mozilla/4.0';
-  HandleRedirects := True;
+  Request.BasicAuthentication := True;
+
+  //HandleRedirects := True;
 
   IOHndl := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
   IOHndl.SSLOptions.SSLVersions := [sslvSSLv2, sslvSSLv23, sslvSSLv3, sslvTLSv1,sslvTLSv1_1,sslvTLSv1_2];
-
-  Request.BasicAuthentication := True;
-  HandleRedirects := True;
   IOHandler := IOHndl;
+
+  HandleRedirects := True;
   ReadTimeout := 30000;
 
-  //Self.Request.Username := 'JEAN.FUCHS';
-  //Self.Request.Password := 'Jff_53557782';
+  fID := 0;
 
   OnWork      := HTTPWork;
   OnWorkBegin := HTTPWorkBegin;
   OnWorkEnd   := HTTPWorkEnd;
 end;
 
+destructor TIdHTTPProgress.Destroy;
+begin
+  FreeAndNil(IOHndl);
+  inherited;
+end;
+
 procedure TIdHTTPProgress.DownloadFile(const aFileUrl: string; const aDestinationFile: string);
 var
-  aPath: string;
-  LDestStream: TFileStream;
+  Path: string;
+  DestStream: TFileStream;
 begin
-  Progress := 0;
+  fProgress := 0;
   fBytesToTransfer := 0;
-  aPath := ExtractFilePath(aDestinationFile);
-  if aPath <> '' then
-    ForceDirectories(aPath);
 
-  LDestStream := TFileStream.Create(aDestinationFile, fmCreate);
+  Path := ExtractFilePath(aDestinationFile);
+  if Path <> '' then
+    ForceDirectories(Path);
+
+  DestStream := TFileStream.Create(aDestinationFile, fmCreate);
   try
-    Get(aFileUrl, LDestStream);
+    Get(aFileUrl, DestStream);
   finally
-    FreeAndNil(LDestStream);
+    FreeAndNil(DestStream);
   end;
 end;
 
 procedure TIdHTTPProgress.HTTPWork(ASender: TObject; aWorkMode: TWorkMode; aWorkCount: Int64);
 begin
-  if BytesToTransfer = 0 then // No Update File
+  if fBytesToTransfer = 0 then
     Exit;
 
-  Progress := Round((aWorkCount / BytesToTransfer) * 100);
+  fProgress := Round((aWorkCount / fBytesToTransfer) * 100);
 end;
 
 procedure TIdHTTPProgress.HTTPWorkBegin(ASender: TObject; aWorkMode: TWorkMode; aWorkCountMax: Int64);
@@ -100,7 +111,7 @@ end;
 
 procedure TIdHTTPProgress.HTTPWorkEnd(Sender: TObject; aWorkMode: TWorkMode);
 begin
-  Progress := 100;
+  fProgress := 100;
   fBytesToTransfer := 0;
 end;
 

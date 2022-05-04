@@ -41,6 +41,7 @@ type
     function    AdicionarURL(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     function    ZerarDownload(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     function    RemoverURL(aLogDownloadDTO: TLogDownloadDTO): Boolean;
+    function    Inicializar(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     function    Finalizar(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     procedure   CarregarLogDownload(aLogDownloadDTO: TLogDownloadDTO);
     procedure   ValidarResetar(aPasta: string);
@@ -90,7 +91,10 @@ end;
 procedure TLogDownloadDAO.ValidarResetar(aPasta: string);
 var
   Arquivo: string;
+  LogDownloadDTO: TLogDownloadDTO;
 begin
+  LogDownloadDTO := TLogDownloadDTO.Create;
+
   with TFDQuery.Create(nil) do
   try
     Connection := fConexao;
@@ -98,15 +102,18 @@ begin
     Open;
     while not Eof do
     begin
-      Arquivo := TUtils.ExtractFileFromURL(FieldByName(cLogDownload_URL).AsString);
+      LogDownloadDTO.Codigo := FieldByName(cLogDownload_CODIGO).AsInteger;
 
-      if not FileExists(aPasta + Arquivo) then
+      CarregarLogDownload(LogDownloadDTO);
 
+      if not FileExists(aPasta + LogDownloadDTO.Arquivo) then
+        ZerarDownload(LogDownloadDTO);
 
       Next;
     end;
   finally
     Free;
+    FreeAndNil(LogDownloadDTO);
   end;
 end;
 
@@ -121,8 +128,8 @@ begin
                   '       DATAFIM = :DATAFIM '+
                   ' WHERE CODIGO = :CODIGO';
       ParamByName(cLogDownload_CODIGO).Value     := aLogDownloadDTO.Codigo;
-      ParamByName(cLogDownload_DATAINICIO).Value := aLogDownloadDTO.DataInicio;
-      ParamByName(cLogDownload_DATAFIM).Value    := aLogDownloadDTO.DataFim;
+      ParamByName(cLogDownload_DATAINICIO).Value := 0;
+      ParamByName(cLogDownload_DATAFIM).Value    := 0;
       ExecSQL;
     end;
     Result := True;
@@ -144,6 +151,25 @@ begin
       ParamByName(cLogDownload_URL).Value        := aLogDownloadDTO.URL;
       ParamByName(cLogDownload_DATAINICIO).Value := aLogDownloadDTO.DataInicio;
       ParamByName(cLogDownload_DATAFIM).Value    := aLogDownloadDTO.DataFim;
+      ExecSQL;
+    end;
+    Result := True;
+  except
+    Result := False;
+  end;
+end;
+
+function TLogDownloadDAO.Inicializar(aLogDownloadDTO: TLogDownloadDTO): Boolean;
+begin
+  try
+    with qLog do
+    begin
+      Close;
+      SQL.Text := 'UPDATE LOGDOWNLOAD '+
+                  '   SET DATAINICIO = :DATAINICIO '+
+                  ' WHERE CODIGO = :CODIGO';
+      ParamByName(cLogDownload_CODIGO).Value  := aLogDownloadDTO.Codigo;
+      ParamByName(cLogDownload_DATAINICIO).Value := aLogDownloadDTO.DataInicio;
       ExecSQL;
     end;
     Result := True;
