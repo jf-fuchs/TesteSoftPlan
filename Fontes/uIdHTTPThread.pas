@@ -28,7 +28,6 @@ type
     procedure OnWork(ASender: TObject; aWorkMode: TWorkMode; aWorkCount: Int64);
     procedure OnWorkBegin(ASender: TObject; aWorkMode: TWorkMode; aWorkCountMax: Int64);
     procedure OnWorkEnd(ASender: TObject; aWorkMode: TWorkMode);
-    procedure Disconnect;
   public
     constructor Create(aID: Integer; CreateSuspended: Boolean);
     destructor Destroy; override;
@@ -77,11 +76,6 @@ begin
   FreeAndNil(IOHndl);
   FreeAndNil(IdHTTP);
   inherited;
-end;
-
-procedure TIdHTTPThread.Disconnect;
-begin
-  IdHTTP.Disconnect;
 end;
 
 procedure TIdHTTPThread.Execute;
@@ -133,6 +127,9 @@ end;
 
 procedure TIdHTTPThread.OnWorkEnd(ASender: TObject; AWorkMode: TWorkMode);
 begin
+  IdHTTP.Disconnect;
+  Terminate;
+
   Synchronize(
     procedure ()
     begin

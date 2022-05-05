@@ -30,6 +30,8 @@ type
     Conexao: TFDConnection;
     Transacao: TFDTransaction;
     procedure DataModuleCreate(Sender: TObject);
+    procedure CDSDATAINICIOGetText(Sender: TField; var Text: string;
+      DisplayText: Boolean);
   private
     { Private declarations }
   public
@@ -47,6 +49,14 @@ implementation
 
 uses
   uUtils;
+
+procedure TDM.CDSDATAINICIOGetText(Sender: TField; var Text: string; DisplayText: Boolean);
+begin
+  if Sender.AsDateTime <= 0 then
+    Text := ''
+  else
+    Text := Sender.AsString;
+end;
 
 procedure TDM.DataModuleCreate(Sender: TObject);
 begin

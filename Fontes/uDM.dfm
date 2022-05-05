@@ -65,10 +65,12 @@ object DM: TDM
     object CDSDATAINICIO: TDateTimeField
       FieldName = 'DATAINICIO'
       Required = True
+      OnGetText = CDSDATAINICIOGetText
     end
     object CDSDATAFIM: TDateTimeField
       FieldName = 'DATAFIM'
       Required = True
+      OnGetText = CDSDATAINICIOGetText
     end
     object CDSCODIGO: TAutoIncField
       FieldName = 'CODIGO'

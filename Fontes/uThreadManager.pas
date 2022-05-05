@@ -12,6 +12,7 @@ type
   public
     constructor Create;
     procedure   AddThread(aThread: TIdHTTPThread);
+    procedure   ExcluirThread(aID: Integer);
     function    ExisteThread(aID: Integer; const aEmExecucao: Boolean = False): Boolean;
     function    ExisteThreadEmExecucao: Boolean;
     procedure   Parar(aID: Integer);
@@ -36,6 +37,18 @@ destructor TThreadManager.Destroy;
 begin
   FreeAndNil(Lista);
   inherited;
+end;
+
+procedure TThreadManager.ExcluirThread(aID: Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(Lista.Count) do
+    if Lista[i].ID = aID then
+    begin
+      Lista.Delete(i);
+      Break;
+    end;
 end;
 
 function TThreadManager.ExisteThread(aID: Integer; const aEmExecucao: Boolean = False): Boolean;

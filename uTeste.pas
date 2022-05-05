@@ -17,21 +17,23 @@ uses
 type
   TFrmLogDownloads = class(TForm)
     dsLog: TDataSource;
-    Panel1: TPanel;
+    pnFundoBotoes: TPanel;
     pnBotoes: TPanel;
     btnAdicionar: TBitBtn;
     btnRemoverURL: TBitBtn;
     btnIniciar: TBitBtn;
     btnIniciarTodos: TBitBtn;
     btnInterromper: TBitBtn;
-    Panel2: TPanel;
+    pnFundo: TPanel;
     gdLog: TDBGrid;
+    pnErro: TPanel;
+    TimerErro: TTimer;
+    pnMsgErro: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure btnAdicionarClick(Sender: TObject);
     procedure btnRemoverURLClick(Sender: TObject);
     procedure gdLogDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure FormResize(Sender: TObject);
-    procedure CDSDATAFIMGetText(Sender: TField; var Text: string; DisplayText: Boolean);
     procedure btnIniciarTodosClick(Sender: TObject);
     procedure IniciarDownload(aID: Integer);
     procedure btnIniciarClick(Sender: TObject);
@@ -42,10 +44,12 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormDestroy(Sender: TObject);
     procedure btnInterromperClick(Sender: TObject);
+    procedure TimerErroTimer(Sender: TObject);
   private
     ThreadManager: TThreadManager;
     PastaDownloads: string;
     LogDownloadDAO: TLogDownloadDAO;
+    procedure MsgErro(aMsg: string);
   public
     { Public declarations }
   end;
@@ -90,13 +94,16 @@ procedure TFrmLogDownloads.FormCloseQuery(Sender: TObject; var CanClose: Boolean
 begin
   CanClose := not ThreadManager.ExisteThreadEmExecucao;
   if not CanClose then
-    TUtils.MsgErro('AGUARDE. Existem downloads em andamento!');
+    MsgErro('AGUARDE. Existem downloads em andamento!');
 end;
 
 procedure TFrmLogDownloads.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_F5 then
+  begin
+    DM.CDS.ApplyUpdates(0);
     DM.CDS.Refresh;
+  end;
 end;
 
 procedure TFrmLogDownloads.FormResize(Sender: TObject);
@@ -110,14 +117,6 @@ begin
         Tot := Tot + (gdLog.Columns[i].Width - 5);
 
   gdLog.Columns[1].Width := gdLog.Width - Tot - 52;
-end;
-
-procedure TFrmLogDownloads.CDSDATAFIMGetText(Sender: TField; var Text: string; DisplayText: Boolean);
-begin
-  if Sender.AsDateTime <= 0 then
-    Text := ''
-  else
-    Text := Sender.AsString;
 end;
 
 procedure TFrmLogDownloads.gdLogDrawColumnCell(Sender: TObject; const Rect: TRect;
@@ -161,6 +160,7 @@ begin
     if LogDTO.URL <> '' then
     begin
       LogDownloadDAO.AdicionarURL(LogDTO);
+      DM.CDS.ApplyUpdates(0);
       DM.CDS.Refresh;
     end;
   finally
@@ -172,18 +172,23 @@ procedure TFrmLogDownloads.btnRemoverURLClick(Sender: TObject);
 var
   LogDTO: TLogDownloadDTO;
 begin
-  if MessageDlg('Confirma excluir a URL?', mtConfirmation, [mbNo,mbYes], 0) <> mrYes then
-    Exit;
-
   LogDTO := TLogDownloadDTO.Create;
   try
     LogDTO.Codigo := DM.CDS.FieldByName(cLogDownload_CODIGO).AsInteger;
 
     if ThreadManager.ExisteThread(LogDTO.Codigo, True) then
-      TUtils.MsgErro('Este Download ainda está em execução!')
+      MsgErro('Este Download ainda está em execução!')
     else
+    begin
+      if MessageDlg('Confirma excluir a URL?', mtConfirmation, [mbNo,mbYes], 0) <> mrYes then
+        Exit;
+
       if LogDownloadDAO.RemoverURL(LogDTO) then
+      begin
+        DM.CDS.ApplyUpdates(0);
         DM.CDS.Refresh;
+      end;
+    end;
   finally
     FreeAndNil(LogDTO);
   end;
@@ -196,7 +201,7 @@ var
 begin
   if ThreadManager.ExisteThread(aID) then
   begin
-    TUtils.MsgErro('O Download deste arquivo já está em execução!');
+    MsgErro('O Download deste arquivo já está em execução!');
     Exit;
   end;
 
@@ -214,12 +219,19 @@ begin
     HTTPThread.OnEnd := WorkEnd;
 
     HTTPThread.FreeOnTerminate := True;
-    HTTPThread.Suspended := False;
+    HTTPThread.Resume;
 
     ThreadManager.AddThread(HTTPThread);
   finally
     FreeAndNil(LogDTO);
   end;
+end;
+
+procedure TFrmLogDownloads.MsgErro(aMsg: string);
+begin
+  pnMsgErro.Caption := aMsg;
+  pnErro.Visible := True;
+  TimerErro.Enabled := True;
 end;
 
 procedure TFrmLogDownloads.btnIniciarClick(Sender: TObject);
@@ -257,6 +269,13 @@ begin
   finally
     DM.CDS.Locate(cLogDownload_CODIGO, IDAtual, []);
   end;
+  Application.ProcessMessages;
+end;
+
+procedure TFrmLogDownloads.TimerErroTimer(Sender: TObject);
+begin
+  pnErro.Visible := False;
+  TimerErro.Enabled := False;
 end;
 
 procedure TFrmLogDownloads.WorkBegin(Sender: TObject; aID: Integer);
@@ -283,6 +302,7 @@ begin
     LogDTO.Codigo := aID;
     LogDTO.DataFim := Now;
     LogDownloadDAO.Finalizar(LogDTO);
+    ThreadManager.ExcluirThread(aID);
   finally
     FreeAndNil(LogDTO);
   end;

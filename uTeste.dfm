@@ -3,7 +3,7 @@ object FrmLogDownloads: TFrmLogDownloads
   Top = 0
   Caption = 'Log Downloads'
   ClientHeight = 446
-  ClientWidth = 781
+  ClientWidth = 880
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,11 +20,11 @@ object FrmLogDownloads: TFrmLogDownloads
   OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
-  object Panel1: TPanel
+  object pnFundoBotoes: TPanel
     Left = 0
     Top = 0
     Width = 125
-    Height = 446
+    Height = 418
     Align = alLeft
     BevelOuter = bvNone
     Color = clSilver
@@ -36,18 +36,19 @@ object FrmLogDownloads: TFrmLogDownloads
     ParentBackground = False
     ParentCtl3D = False
     TabOrder = 1
+    ExplicitHeight = 446
     object pnBotoes: TPanel
       Left = 5
       Top = 5
       Width = 115
-      Height = 436
+      Height = 408
       Align = alClient
       Color = clSkyBlue
       Ctl3D = False
       ParentBackground = False
       ParentCtl3D = False
       TabOrder = 0
-      ExplicitWidth = 174
+      ExplicitHeight = 436
       object btnAdicionar: TBitBtn
         Left = 5
         Top = 5
@@ -206,11 +207,11 @@ object FrmLogDownloads: TFrmLogDownloads
       end
     end
   end
-  object Panel2: TPanel
+  object pnFundo: TPanel
     Left = 125
     Top = 0
-    Width = 656
-    Height = 446
+    Width = 755
+    Height = 418
     Align = alClient
     BevelOuter = bvNone
     Color = clSilver
@@ -219,15 +220,13 @@ object FrmLogDownloads: TFrmLogDownloads
     Padding.Bottom = 5
     ParentBackground = False
     TabOrder = 0
-    ExplicitLeft = 272
-    ExplicitTop = 200
-    ExplicitWidth = 185
-    ExplicitHeight = 41
+    ExplicitWidth = 656
+    ExplicitHeight = 446
     object gdLog: TDBGrid
       Left = 0
       Top = 5
-      Width = 651
-      Height = 436
+      Width = 750
+      Height = 408
       Align = alClient
       Ctl3D = True
       DataSource = dsLog
@@ -265,6 +264,7 @@ object FrmLogDownloads: TFrmLogDownloads
           Expanded = False
           FieldName = 'DATAFIM'
           Title.Caption = 'Fim'
+          Width = 99
           Visible = True
         end
         item
@@ -274,9 +274,53 @@ object FrmLogDownloads: TFrmLogDownloads
         end>
     end
   end
+  object pnErro: TPanel
+    Left = 0
+    Top = 418
+    Width = 880
+    Height = 28
+    Align = alBottom
+    BevelOuter = bvNone
+    Color = clSilver
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlack
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    Padding.Left = 5
+    Padding.Right = 5
+    Padding.Bottom = 5
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 2
+    Visible = False
+    ExplicitWidth = 781
+    object pnMsgErro: TPanel
+      Left = 5
+      Top = 0
+      Width = 870
+      Height = 23
+      Align = alClient
+      Caption = 'MENSAGEM'
+      Color = clYellow
+      ParentBackground = False
+      TabOrder = 0
+      ExplicitLeft = 112
+      ExplicitTop = 16
+      ExplicitWidth = 185
+      ExplicitHeight = 41
+    end
+  end
   object dsLog: TDataSource
     DataSet = DM.CDS
     Left = 368
     Top = 88
+  end
+  object TimerErro: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = TimerErroTimer
+    Left = 168
+    Top = 336
   end
 end
