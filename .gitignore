@@ -1,4 +1,5 @@
 *.dcu
+*.vlb
 *.identcache
 *.local
 Win32\*.*

@@ -3,7 +3,7 @@ unit uLogDownload;
 interface
 
 uses
-  System.SysUtils, Data.DB, FireDAC.UI.Intf, FireDAC.Comp.Client;
+  System.SysUtils, Data.DB, FireDAC.UI.Intf, FireDAC.Comp.Client, FireDAC.Stan.Param;
 
 const
   cLogDownload_CalcPERC   = 'PERC';
@@ -90,7 +90,6 @@ end;
 
 procedure TLogDownloadDAO.ValidarResetar(aPasta: string);
 var
-  Arquivo: string;
   LogDownloadDTO: TLogDownloadDTO;
 begin
   LogDownloadDTO := TLogDownloadDTO.Create;

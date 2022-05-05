@@ -1,10 +1,7 @@
-﻿[gdLog]
-Coordinates=106,188,50,36
-
-[dsLog]
+﻿[dsLog]
 Coordinates=211,155,49,36
 
 []
-Coordinates=10,10,77,168
+Coordinates=106,188,50,36
 Visible=True
 

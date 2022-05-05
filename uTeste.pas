@@ -12,18 +12,20 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids, Vcl.DBGrids,
   Vcl.StdCtrls, Vcl.Buttons, Vcl.ComCtrls, System.UITypes, IdComponent, Datasnap.DBClient,
-  Datasnap.Provider, Vcl.ExtCtrls, uLogDownload;
+  Datasnap.Provider, Vcl.ExtCtrls, uLogDownload, uIdHTTPThread, uThreadManager;
 
 type
   TFrmLogDownloads = class(TForm)
-    gdLog: TDBGrid;
     dsLog: TDataSource;
     Panel1: TPanel;
+    pnBotoes: TPanel;
     btnAdicionar: TBitBtn;
     btnRemoverURL: TBitBtn;
     btnIniciar: TBitBtn;
     btnIniciarTodos: TBitBtn;
     btnInterromper: TBitBtn;
+    Panel2: TPanel;
+    gdLog: TDBGrid;
     procedure FormCreate(Sender: TObject);
     procedure btnAdicionarClick(Sender: TObject);
     procedure btnRemoverURLClick(Sender: TObject);
@@ -37,8 +39,11 @@ type
     procedure WorkBegin(Sender: TObject; aID: Integer);
     procedure ProgressOnChange(Sender: TObject; aID: Integer; aProgress: Int64);
     procedure WorkEnd(Sender: TObject; aID: Integer);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormDestroy(Sender: TObject);
+    procedure btnInterromperClick(Sender: TObject);
   private
+    ThreadManager: TThreadManager;
     PastaDownloads: string;
     LogDownloadDAO: TLogDownloadDAO;
   public
@@ -53,7 +58,7 @@ implementation
 {$R *.dfm}
 
 uses
-  uDM, uUtils, uIdHTTPThread;
+  uDM, uUtils;
 
 procedure TFrmLogDownloads.FormCreate(Sender: TObject);
 begin
@@ -62,6 +67,8 @@ begin
     ForceDirectories(PastaDownloads);
 
   DM := TDM.Create(nil);
+
+  ThreadManager := TThreadManager.Create;
 
   LogDownloadDAO := TLogDownloadDAO.Create;
   LogDownloadDAO.Conexao := DM.Conexao;
@@ -72,10 +79,18 @@ begin
   DM.CDS.Open;
 end;
 
-procedure TFrmLogDownloads.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TFrmLogDownloads.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(ThreadManager);
   FreeAndNil(LogDownloadDAO);
   FreeAndNil(DM);
+end;
+
+procedure TFrmLogDownloads.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose := not ThreadManager.ExisteThreadEmExecucao;
+  if not CanClose then
+    TUtils.MsgErro('AGUARDE. Existem downloads em andamento!');
 end;
 
 procedure TFrmLogDownloads.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -163,8 +178,12 @@ begin
   LogDTO := TLogDownloadDTO.Create;
   try
     LogDTO.Codigo := DM.CDS.FieldByName(cLogDownload_CODIGO).AsInteger;
-    if LogDownloadDAO.RemoverURL(LogDTO) then
-      DM.CDS.Refresh;
+
+    if ThreadManager.ExisteThread(LogDTO.Codigo, True) then
+      TUtils.MsgErro('Este Download ainda está em execução!')
+    else
+      if LogDownloadDAO.RemoverURL(LogDTO) then
+        DM.CDS.Refresh;
   finally
     FreeAndNil(LogDTO);
   end;
@@ -175,6 +194,12 @@ var
   LogDTO: TLogDownloadDTO;
   HTTPThread: TIdHTTPThread;
 begin
+  if ThreadManager.ExisteThread(aID) then
+  begin
+    TUtils.MsgErro('O Download deste arquivo já está em execução!');
+    Exit;
+  end;
+
   LogDTO := TLogDownloadDTO.Create;
   try
     LogDTO.Codigo := aID;
@@ -189,7 +214,9 @@ begin
     HTTPThread.OnEnd := WorkEnd;
 
     HTTPThread.FreeOnTerminate := True;
-    HTTPThread.Resume;
+    HTTPThread.Suspended := False;
+
+    ThreadManager.AddThread(HTTPThread);
   finally
     FreeAndNil(LogDTO);
   end;
@@ -201,8 +228,6 @@ begin
 end;
 
 procedure TFrmLogDownloads.btnIniciarTodosClick(Sender: TObject);
-var
-  i: Integer;
 begin
   DM.CDS.First;
   while not DM.CDS.Eof do
@@ -210,6 +235,11 @@ begin
     IniciarDownload(DM.CDS.FieldByName('CODIGO').AsInteger);
     DM.CDS.Next;
   end;
+end;
+
+procedure TFrmLogDownloads.btnInterromperClick(Sender: TObject);
+begin
+  ThreadManager.Parar(DM.CDS.FieldByName('CODIGO').AsInteger);
 end;
 
 procedure TFrmLogDownloads.ProgressOnChange(Sender: TObject; aID: Integer; aProgress: Int64);

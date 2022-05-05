@@ -24,10 +24,11 @@ type
     fOnEnd: TOnEndEvent;
     fOnStart: TOnStartEvent;
     fOnProgress: TOnProgressEvent;
-    procedure Disconnect;
+    fCancel: Boolean;
     procedure OnWork(ASender: TObject; aWorkMode: TWorkMode; aWorkCount: Int64);
     procedure OnWorkBegin(ASender: TObject; aWorkMode: TWorkMode; aWorkCountMax: Int64);
     procedure OnWorkEnd(ASender: TObject; aWorkMode: TWorkMode);
+    procedure Disconnect;
   public
     constructor Create(aID: Integer; CreateSuspended: Boolean);
     destructor Destroy; override;
@@ -38,6 +39,7 @@ type
     property OnStart: TOnStartEvent read fOnStart write fOnStart;
     property OnProgress: TOnProgressEvent read fOnProgress write fOnProgress;
     property OnEnd: TOnEndEvent read fOnEnd write fOnEnd;
+    property Cancel: Boolean read fCancel write fCancel;
   protected
     procedure Execute; override;
   end;
@@ -65,9 +67,9 @@ begin
   IdHTTP.OnWorkBegin := OnWorkBegin;
   IdHTTP.OnWork := OnWork;
   IdHTTP.OnWorkEnd := OnWorkEnd;
-  //IdHTTP.Disconnect := Disconnect;
 
   fID := aID;
+  fCancel := False;
 end;
 
 destructor TIdHTTPThread.Destroy;
@@ -109,7 +111,16 @@ end;
 
 procedure TIdHTTPThread.OnWork(ASender: TObject; aWorkMode: TWorkMode; aWorkCount: Int64);
 begin
-  fProgress := Round((aWorkCount / fWorkCountMax) * 100);
+  if fWorkCountMax > 0 then
+    fProgress := Round((aWorkCount / fWorkCountMax) * 100);
+
+  if fCancel then
+  begin
+    fCancel := False;
+    IdHTTP.Disconnect;
+    Terminate;
+    Abort;
+  end;
 
   Synchronize(
     procedure ()

@@ -3,7 +3,7 @@ unit uUtils;
 interface
 
 uses
-  System.SysUtils, Data.DB, VCL.Forms, Dialogs;
+  System.SysUtils, System.UITypes, Data.DB, VCL.Forms, Dialogs;
 
 type
   TModeCopyDataSetToVirtualTable = (mcvtAppend, mcvtUpdate, mcvtAppendUpdate, mcvtDelete);
