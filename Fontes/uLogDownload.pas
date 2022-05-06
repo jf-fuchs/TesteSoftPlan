@@ -37,7 +37,7 @@ type
     fConexao: TFDConnection;
     procedure SetConexao(const Value: TFDConnection);
   public
-    constructor Create;
+    constructor Create(aConexao: TFDConnection);
     function    AdicionarURL(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     function    ZerarDownload(aLogDownloadDTO: TLogDownloadDTO): Boolean;
     function    RemoverURL(aLogDownloadDTO: TLogDownloadDTO): Boolean;
@@ -70,9 +70,11 @@ end;
 
 { TLogDownloadDAO }
 
-constructor TLogDownloadDAO.Create;
+constructor TLogDownloadDAO.Create(aConexao: TFDConnection);
 begin
+  fConexao := aConexao;
   qLog := TFDQuery.Create(nil);
+  qLog.Connection := aConexao;
 end;
 
 destructor TLogDownloadDAO.Destroy;

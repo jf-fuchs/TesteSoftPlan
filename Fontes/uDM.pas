@@ -30,12 +30,11 @@ type
     Conexao: TFDConnection;
     Transacao: TFDTransaction;
     procedure DataModuleCreate(Sender: TObject);
-    procedure CDSDATAINICIOGetText(Sender: TField; var Text: string;
-      DisplayText: Boolean);
+    procedure CDSDATAINICIOGetText(Sender: TField; var Text: string; DisplayText: Boolean);
   private
     { Private declarations }
   public
-    { Public declarations }
+    procedure AtualizarCDS;
   end;
 
 var
@@ -49,6 +48,12 @@ implementation
 
 uses
   uUtils;
+
+procedure TDM.AtualizarCDS;
+begin
+  CDS.ApplyUpdates(0);
+  CDS.Refresh;
+end;
 
 procedure TDM.CDSDATAINICIOGetText(Sender: TField; var Text: string; DisplayText: Boolean);
 begin

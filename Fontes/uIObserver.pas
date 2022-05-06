@@ -2,12 +2,11 @@ unit uIObserver;
 
 interface
 
-uses
-  uLogDownload;
-
 type
   IObserver = interface
-    procedure Atualizar(aLogDownloadDTO: TLogDownloadDTO);
+    procedure Iniciar(aID: Integer);
+    procedure Atualizar(aID, aProgress: Integer);
+    procedure Finalizar(aID: Integer);
   end;
 
 implementation

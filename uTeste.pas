@@ -12,10 +12,11 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.Grids, Vcl.DBGrids,
   Vcl.StdCtrls, Vcl.Buttons, Vcl.ComCtrls, System.UITypes, IdComponent, Datasnap.DBClient,
-  Datasnap.Provider, Vcl.ExtCtrls, uLogDownload, uIdHTTPThread, uThreadManager;
+  Datasnap.Provider, Vcl.ExtCtrls, uLogDownload, uIdHTTPThread, uThreadManager,
+  System.Generics.Collections, uISubject, uIObserver, uObserverDownloads;
 
 type
-  TFrmLogDownloads = class(TForm)
+  TFrmLogDownloads = class(TForm, ISubject)
     dsLog: TDataSource;
     pnFundoBotoes: TPanel;
     pnBotoes: TPanel;
@@ -40,18 +41,21 @@ type
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure WorkBegin(Sender: TObject; aID: Integer);
     procedure ProgressOnChange(Sender: TObject; aID: Integer; aProgress: Int64);
-    procedure WorkEnd(Sender: TObject; aID: Integer);
+    procedure WorkEnd(Sender: TObject; aID: Integer; aCancel: Boolean);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormDestroy(Sender: TObject);
     procedure btnInterromperClick(Sender: TObject);
     procedure TimerErroTimer(Sender: TObject);
   private
+    ListaObservers: TList<IObserver>;
     ThreadManager: TThreadManager;
     PastaDownloads: string;
     LogDownloadDAO: TLogDownloadDAO;
+    ObserverDownloads: TObserverDownloads;
     procedure MsgErro(aMsg: string);
   public
-    { Public declarations }
+    procedure AdicionarObserver(aObserver: IObserver);
+    procedure RemoverObserver(aObserver: IObserver);
   end;
 
 var
@@ -74,17 +78,22 @@ begin
 
   ThreadManager := TThreadManager.Create;
 
-  LogDownloadDAO := TLogDownloadDAO.Create;
-  LogDownloadDAO.Conexao := DM.Conexao;
+  LogDownloadDAO := TLogDownloadDAO.Create(DM.Conexao);
   LogDownloadDAO.ValidarResetar(PastaDownloads);
 
   gdLog.Columns[0].Width := 104;
 
   DM.CDS.Open;
+
+  ObserverDownloads := TObserverDownloads.Create;
+
+  ListaObservers := TList<IObserver>.Create;
+  ListaObservers.Add(ObserverDownloads);
 end;
 
 procedure TFrmLogDownloads.FormDestroy(Sender: TObject);
 begin
+  FreeAndNil(ListaObservers);
   FreeAndNil(ThreadManager);
   FreeAndNil(LogDownloadDAO);
   FreeAndNil(DM);
@@ -92,7 +101,7 @@ end;
 
 procedure TFrmLogDownloads.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  CanClose := not ThreadManager.ExisteThreadEmExecucao;
+  CanClose := not ThreadManager.ExisteThreadEmAndamento;
   if not CanClose then
     MsgErro('AGUARDE. Existem downloads em andamento!');
 end;
@@ -100,10 +109,7 @@ end;
 procedure TFrmLogDownloads.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_F5 then
-  begin
-    DM.CDS.ApplyUpdates(0);
-    DM.CDS.Refresh;
-  end;
+    DM.AtualizarCDS;
 end;
 
 procedure TFrmLogDownloads.FormResize(Sender: TObject);
@@ -119,6 +125,7 @@ begin
   gdLog.Columns[1].Width := gdLog.Width - Tot - 52;
 end;
 
+//------------------------------------------------------------------------------
 procedure TFrmLogDownloads.gdLogDrawColumnCell(Sender: TObject; const Rect: TRect;
   DataCol: Integer; Column: TColumn; State: TGridDrawState);
 var
@@ -149,6 +156,7 @@ begin
   end;
 end;
 
+//------------------------------------------------------------------------------
 procedure TFrmLogDownloads.btnAdicionarClick(Sender: TObject);
 var
   LogDTO: TLogDownloadDTO;
@@ -160,8 +168,7 @@ begin
     if LogDTO.URL <> '' then
     begin
       LogDownloadDAO.AdicionarURL(LogDTO);
-      DM.CDS.ApplyUpdates(0);
-      DM.CDS.Refresh;
+      DM.AtualizarCDS;
     end;
   finally
     FreeAndNil(LogDTO);
@@ -184,14 +191,31 @@ begin
         Exit;
 
       if LogDownloadDAO.RemoverURL(LogDTO) then
-      begin
-        DM.CDS.ApplyUpdates(0);
-        DM.CDS.Refresh;
-      end;
+        DM.AtualizarCDS;
     end;
   finally
     FreeAndNil(LogDTO);
   end;
+end;
+
+procedure TFrmLogDownloads.btnIniciarClick(Sender: TObject);
+begin
+  IniciarDownload(DM.CDS.FieldByName('CODIGO').AsInteger);
+end;
+
+procedure TFrmLogDownloads.btnIniciarTodosClick(Sender: TObject);
+begin
+  DM.CDS.First;
+  while not DM.CDS.Eof do
+  begin
+    IniciarDownload(DM.CDS.FieldByName('CODIGO').AsInteger);
+    DM.CDS.Next;
+  end;
+end;
+
+procedure TFrmLogDownloads.btnInterromperClick(Sender: TObject);
+begin
+  ThreadManager.PararThread(DM.CDS.FieldByName('CODIGO').AsInteger);
 end;
 
 procedure TFrmLogDownloads.IniciarDownload(aID: Integer);
@@ -221,10 +245,17 @@ begin
     HTTPThread.FreeOnTerminate := True;
     HTTPThread.Resume;
 
-    ThreadManager.AddThread(HTTPThread);
+    ThreadManager.AdicionarThread(HTTPThread);
   finally
     FreeAndNil(LogDTO);
   end;
+end;
+
+//------------------------------------------------------------------------------
+procedure TFrmLogDownloads.TimerErroTimer(Sender: TObject);
+begin
+  pnErro.Visible := False;
+  TimerErro.Enabled := False;
 end;
 
 procedure TFrmLogDownloads.MsgErro(aMsg: string);
@@ -234,78 +265,47 @@ begin
   TimerErro.Enabled := True;
 end;
 
-procedure TFrmLogDownloads.btnIniciarClick(Sender: TObject);
-begin
-  IniciarDownload(DM.CDS.FieldByName('CODIGO').AsInteger);
-end;
-
-procedure TFrmLogDownloads.btnIniciarTodosClick(Sender: TObject);
-begin
-  DM.CDS.First;
-  while not DM.CDS.Eof do
-  begin
-    IniciarDownload(DM.CDS.FieldByName('CODIGO').AsInteger);
-    DM.CDS.Next;
-  end;
-end;
-
-procedure TFrmLogDownloads.btnInterromperClick(Sender: TObject);
-begin
-  ThreadManager.Parar(DM.CDS.FieldByName('CODIGO').AsInteger);
-end;
-
-procedure TFrmLogDownloads.ProgressOnChange(Sender: TObject; aID: Integer; aProgress: Int64);
+//------------------------------------------------------------------------------
+procedure TFrmLogDownloads.WorkBegin(Sender: TObject; aID: Integer);
 var
-  IDAtual: Integer;
+  Observer: IObserver;
 begin
-  IDAtual := DM.CDS.FieldByName('CODIGO').AsInteger;
-  try
-    if DM.CDS.Locate(cLogDownload_CODIGO, aID, []) then
-    begin
-      DM.CDS.Edit;
-      DM.CDS.FieldByName(cLogDownload_CalcPERC).Value := aProgress;
-      DM.CDS.Post;
-    end;
-  finally
-    DM.CDS.Locate(cLogDownload_CODIGO, IDAtual, []);
+  for Observer in ListaObservers do
+  begin
+    Observer.Iniciar(aID);
+    Observer.Atualizar(aID, 0);
   end;
   Application.ProcessMessages;
 end;
 
-procedure TFrmLogDownloads.TimerErroTimer(Sender: TObject);
+procedure TFrmLogDownloads.WorkEnd(Sender: TObject; aID: Integer; aCancel: Boolean);
+var
+  Observer: IObserver;
 begin
-  pnErro.Visible := False;
-  TimerErro.Enabled := False;
+  ThreadManager.ExcluirThread(aID);
+  if not aCancel then
+    for Observer in ListaObservers do
+      Observer.Finalizar(aID);
 end;
 
-procedure TFrmLogDownloads.WorkBegin(Sender: TObject; aID: Integer);
+procedure TFrmLogDownloads.ProgressOnChange(Sender: TObject; aID: Integer; aProgress: Int64);
 var
-  LogDTO: TLogDownloadDTO;
+  Observer: IObserver;
 begin
-  LogDTO := TLogDownloadDTO.Create;
-  try
-    LogDTO.Codigo := aID;
-    LogDTO.DataInicio := Now;
-    LogDownloadDAO.Inicializar(LogDTO);
-  finally
-    FreeAndNil(LogDTO);
-  end;
-  ProgressOnChange(Self, aID, 0);
+  for Observer in ListaObservers do
+    Observer.Atualizar(aID, aProgress);
+  Application.ProcessMessages;
 end;
 
-procedure TFrmLogDownloads.WorkEnd(Sender: TObject; aID: Integer);
-var
-  LogDTO: TLogDownloadDTO;
+//------------------------------------------------------------------------------
+procedure TFrmLogDownloads.AdicionarObserver(aObserver: IObserver);
 begin
-  LogDTO := TLogDownloadDTO.Create;
-  try
-    LogDTO.Codigo := aID;
-    LogDTO.DataFim := Now;
-    LogDownloadDAO.Finalizar(LogDTO);
-    ThreadManager.ExcluirThread(aID);
-  finally
-    FreeAndNil(LogDTO);
-  end;
+  ListaObservers.Add(aObserver);
+end;
+
+procedure TFrmLogDownloads.RemoverObserver(aObserver: IObserver);
+begin
+  ListaObservers.Delete(ListaObservers.IndexOf(aObserver));
 end;
 
 end.

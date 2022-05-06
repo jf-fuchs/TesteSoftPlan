@@ -7,9 +7,8 @@ uses
 
 type
   ISubject = interface
-    procedure AdicionarObserver(Observer: IObserver);
-    procedure RemoverObserver(Observer: IObserver);
-    procedure Notificar;
+    procedure AdicionarObserver(aObserver: IObserver);
+    procedure RemoverObserver(aObserver: IObserver);
   end;
 
 implementation

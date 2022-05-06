@@ -5,7 +5,8 @@ uses
   uTeste in 'uTeste.pas' {FrmLogDownloads},
   uIdHTTPThread in 'Fontes\uIdHTTPThread.pas',
   uDM in 'Fontes\uDM.pas' {DM: TDataModule},
-  uThreadManager in 'Fontes\uThreadManager.pas';
+  uThreadManager in 'Fontes\uThreadManager.pas',
+  uObserverDownloads in 'Fontes\uObserverDownloads.pas';
 
 {$R *.res}
 

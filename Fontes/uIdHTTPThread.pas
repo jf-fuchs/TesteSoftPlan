@@ -9,7 +9,7 @@ uses
 type
   TOnStartEvent = procedure(aSender: TObject; aID: Integer) of object;
   TOnProgressEvent = procedure(aSender: TObject; aID: Integer; aProgress: Int64) of object;
-  TOnEndEvent = procedure(aSender: TObject; aID: Integer) of object;
+  TOnEndEvent = procedure(aSender: TObject; aID: Integer; aCancel: Boolean) of object;
 
 type
   TIdHTTPThread = class(TThread)
@@ -55,6 +55,7 @@ begin
   IdHTTP.Request.AcceptEncoding := 'gzip, deflate';
   IdHTTP.Request.UserAgent := 'Mozilla/4.0';
   IdHTTP.Request.BasicAuthentication := True;
+  IdHTTP.HTTPOptions := IdHTTP.HTTPOptions + [hoNoProtocolErrorException, hoWantProtocolErrorContent];
 
   IOHndl := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
   IOHndl.SSLOptions.SSLVersions := [sslvSSLv2, sslvSSLv23, sslvSSLv3, sslvTLSv1,sslvTLSv1_1,sslvTLSv1_2];
@@ -84,14 +85,19 @@ var
 begin
   DestStream := TFileStream.Create(Filename, fmCreate);
   try
-    IdHTTP.Get(Url, DestStream);
-  finally
-    DestStream.Free;
+    try
+      IdHTTP.Get(Url, DestStream);
+    finally
+      DestStream.Free;
+    end;
+  except
+    fCancel := True;
   end;
 end;
 
 procedure TIdHTTPThread.OnWorkBegin(ASender: TObject; AWorkMode: TWorkMode; AWorkCountMax: Int64);
 begin
+  fCancel := False;
   fWorkCountMax := aWorkCountMax;
 
   Synchronize(
@@ -110,7 +116,6 @@ begin
 
   if fCancel then
   begin
-    fCancel := False;
     IdHTTP.Disconnect;
     Terminate;
     Abort;
@@ -134,7 +139,7 @@ begin
     procedure ()
     begin
       if Assigned(fOnEnd) then
-        fOnEnd(Self, fID);
+        fOnEnd(Self, fID, fCancel);
     end
   );
 end;

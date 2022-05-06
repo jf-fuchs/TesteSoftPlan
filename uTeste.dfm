@@ -13,6 +13,7 @@ object FrmLogDownloads: TFrmLogDownloads
   KeyPreview = True
   OldCreateOrder = False
   Position = poMainFormCenter
+  WindowState = wsMaximized
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -36,7 +37,6 @@ object FrmLogDownloads: TFrmLogDownloads
     ParentBackground = False
     ParentCtl3D = False
     TabOrder = 1
-    ExplicitHeight = 446
     object pnBotoes: TPanel
       Left = 5
       Top = 5
@@ -48,7 +48,6 @@ object FrmLogDownloads: TFrmLogDownloads
       ParentBackground = False
       ParentCtl3D = False
       TabOrder = 0
-      ExplicitHeight = 436
       object btnAdicionar: TBitBtn
         Left = 5
         Top = 5
@@ -220,8 +219,6 @@ object FrmLogDownloads: TFrmLogDownloads
     Padding.Bottom = 5
     ParentBackground = False
     TabOrder = 0
-    ExplicitWidth = 656
-    ExplicitHeight = 446
     object gdLog: TDBGrid
       Left = 0
       Top = 5
@@ -294,7 +291,6 @@ object FrmLogDownloads: TFrmLogDownloads
     ParentFont = False
     TabOrder = 2
     Visible = False
-    ExplicitWidth = 781
     object pnMsgErro: TPanel
       Left = 5
       Top = 0
@@ -305,10 +301,6 @@ object FrmLogDownloads: TFrmLogDownloads
       Color = clYellow
       ParentBackground = False
       TabOrder = 0
-      ExplicitLeft = 112
-      ExplicitTop = 16
-      ExplicitWidth = 185
-      ExplicitHeight = 41
     end
   end
   object dsLog: TDataSource

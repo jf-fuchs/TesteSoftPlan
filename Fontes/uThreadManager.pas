@@ -11,19 +11,17 @@ type
     Lista: TList<TIdHTTPThread>;
   public
     constructor Create;
-    procedure   AddThread(aThread: TIdHTTPThread);
+    procedure   AdicionarThread(aThread: TIdHTTPThread);
     procedure   ExcluirThread(aID: Integer);
     function    ExisteThread(aID: Integer; const aEmExecucao: Boolean = False): Boolean;
-    function    ExisteThreadEmExecucao: Boolean;
-    procedure   Parar(aID: Integer);
+    function    ExisteThreadEmAndamento: Boolean;
+    procedure   PararThread(aID: Integer);
     destructor  Destroy; override;
   end;
 
 implementation
 
-{ ThreadManager }
-
-procedure TThreadManager.AddThread(aThread: TIdHTTPThread);
+procedure TThreadManager.AdicionarThread(aThread: TIdHTTPThread);
 begin
   Lista.Add(aThread);
 end;
@@ -67,7 +65,7 @@ begin
     end;
 end;
 
-function TThreadManager.ExisteThreadEmExecucao: Boolean;
+function TThreadManager.ExisteThreadEmAndamento: Boolean;
 var
   i: Integer;
 begin
@@ -80,7 +78,7 @@ begin
     end;
 end;
 
-procedure TThreadManager.Parar(aID: Integer);
+procedure TThreadManager.PararThread(aID: Integer);
 var
   i: Integer;
 begin
